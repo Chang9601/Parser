@@ -6,31 +6,32 @@
 #include "parser.h"
 
 // Parse an integer in decimal notation.
-bool parseNumber(int *value, char **input)
+// e.g. 123, 0, -942
+bool parseInteger(int *value, char **input)
 {
 	bool result = true;
 	int sign = ((**input) == '-') ? -1 : 1;
-	int num = ((**input) != '-') ? ((**input) - '0') : 0;
-	bool isDigit = num >= 0 && num <= 9;
+	int integer = ((**input) != '-') ? ((**input) - '0') : 0;
+	bool isDigit = integer >= 0 && integer <= 9;
 
 	char *origin = *input;
 	(*input)++;
 	
-	while(isdigit(**input)) {
-		num = 10 * num + (**input - '0');
+	while (isdigit(**input)) {
+		integer = 10 * integer + (**input - '0');
 		(*input)++;
 	}
 
 	// Process a case where input = 0
-	if(sign > 0 && num == 0) {
+	if (sign > 0 && integer == 0) {
 		*value = 0;	
-	} else if((sign < 0 && (origin + 1) == *input) || !isDigit) {
+	} else if ((sign < 0 && (origin + 1) == *input) || !isDigit) {
 		// Run into an non-digit character	
 		result = false;
 		*input = origin;
 	} else {
 		// Properly formatted integer literal
-		*value = num * sign;	
+		*value = integer * sign;	
 	}
 
 	result = result && isDigit;
@@ -38,7 +39,10 @@ bool parseNumber(int *value, char **input)
 	return result;
 }
 
-// Parse a string
+// Parse a string.
+// Strings are enclosed in double quotes.
+// Strings do not contain a new line character.
+// e.g. "513", "Turing", "Whoa!!!"
 bool parseString(char **value, char **input)
 {
 	bool result = true;	
@@ -48,7 +52,7 @@ bool parseString(char **value, char **input)
 	char *origin = *input;
 	(*input)++;
 
-	while((**input) && (**input != '\n') && ((**input) != '\"')) {
+	while ((**input) && (**input != '\n') && ((**input) != '\"')) {
 		len++;	
 		(*input)++;
 	}	
@@ -56,7 +60,7 @@ bool parseString(char **value, char **input)
 	result = ((**input) == '\"') ? true : false;
 	result = result && isDoubleQuote;
 
-	if(result) {
+	if (result) {
 		*value = calloc(len + 1, sizeof(**value));
 		strncpy(*value, origin + 1, len);
 		// Insert a null terminator to mark the end.
@@ -69,4 +73,73 @@ bool parseString(char **value, char **input)
 	}
 
 	return result;
+}
+
+// Parse a list.
+// Lists are enclosed in square brackers ('[]')
+// Lists contain other types of parsable data (integer, string, list)
+// e.g. [], [1, 2], [1, "Wall", 3], [[], "Snow", [1, 2, [4, 5]]]
+bool parseList(Node **head, char **input)
+{
+	*head = NULL;
+	bool result = true;	
+	// Result of recusive parsing
+	bool subResult = true;
+	bool isSquareBracket = (**input == '[') ? true : false;
+	bool noSyntaxError = true;
+	bool isPrevComma = true;	
+	size_t numData = 0;
+	size_t numCommas = 0;
+			
+	char *origin = *input;
+	(*input)++;
+
+	Data data;
+	while ((**input) && (**input != ']')) {
+
+		while (isspace(**input))
+			(*input)++;
+		
+		if ((**input) == ',') {
+			// If a previous value is ',', syntax error
+			if (isPrevComma) {	
+				noSyntaxError = false;
+				break;
+			}
+			isPrevComm = true;
+			numCommas++;
+			(*input)++;
+		}
+		
+		// If a data type is integer.
+		if (isdigit(**input) || (**input == '-')) {
+			data.type = DATA_INTEGER;
+			parseInteger(&(data.integer), input);
+			*head = _insertNode(*head, &data);
+			numData++;
+			isPrevComma = false;
+			
+		// If a data typee is string.
+		} else if (**input == '\"') {
+			data.type = DATA_STRING;
+			parseSring(&(data.string), input);	
+			*head = _insertNode(*head, &data);
+			freeData(Data);
+			numData++;
+			isPrevComma = false;
+		
+		// If a data type is a list.
+		} else if (**input == '[') {
+			data.type = DATA_LIST;
+			subResult = parseList(&(data.list), input);	
+			if (subResult) {
+				*head = _insertNode(*head, &data);
+				numData++;
+				isPrevComma = false;
+				freeData(data);
+			}
+		}
+
+		//(*input)++;
+	}
 }

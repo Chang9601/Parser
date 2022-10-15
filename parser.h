@@ -15,9 +15,11 @@ typedef struct _Data {
 	enum { DATA_INTEGER, DATA_STRING, DATA_LIST } type;
 } Data;
 
-bool parseNumber(int *value, char **input);
+bool parseInteger(int *value, char **input);
 bool parseString(char **value, char **input);
-bool parseList(Node *head, char **input);
+bool parseList(Node **head, char **input);
+bool parseData(Data *data, char **input);
+void printData(Data data);
 void freeData(Data data);
 
 #endif

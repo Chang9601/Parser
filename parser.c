@@ -8,9 +8,9 @@
 static Node *_insertNode(Node *head, Data *data);
 static void _deallocList(Node *head);
 
-// Parse an integer in decimal notation.
-// true: "123", "0", "-942", "-5230absf"
-// false: "-", "ADVA542", "-gbcb42"
+// 정수를 10진수로 파싱
+// 참: "123", "0", "-942", "-5230absf"
+// 거짓: "-", "ADVA542", "-gbcb42"
 bool parseInteger(int *value, char **input)
 {
 	bool result = true;
@@ -26,14 +26,14 @@ bool parseInteger(int *value, char **input)
 		(*input)++;
 	}
 
-	// If an input equals 0.
+	// 정수가 0일 경우
 	if (sign > 0 && integer == 0) {
 		*value = 0;	
-	// If an input contains non-digit characters.
+	// 입력이 숫자가 아닌 문자를 포함하는 경우
 	} else if ((sign < 0 && (origin + 1) == *input) || !isDigit) {
 		result = false;
 		*input = origin;
-	// If an input contains integer literal.
+	// 입력이 정수 리터럴을 포함하는 경우
 	} else {
 		*value = integer * sign;	
 	}
@@ -43,12 +43,12 @@ bool parseInteger(int *value, char **input)
 	return result;
 }
 
-// Parse a string.
-// A string must be enclosed in double quotes. ("")
-// A string does not contain a new line character. ('\n')
-// The function does not parse escape codes.
-// true: "\"513\"", "\"Turing\"", "\"Whoa!!\"", "\"This\\is\""
-// false: "\"Saa", "\"My name is\n\"" "No left double quote\""
+// 문자열 파싱
+// 문자열은 반드시 큰 따옴표 안에 존재
+// 문자열은 개행 문자('\n')를 포함하지 않음
+// 함수는 이스케이프 코드를 파싱하지 않음
+// 참: "\"513\"", "\"Turing\"", "\"Whoa!!\"", "\"This\\is\""
+// 거짓: "\"Saa", "\"My name is\n\"" "No left double quote\""
 bool parseString(char **value, char **input)
 {
 	bool result = true;	
@@ -69,9 +69,9 @@ bool parseString(char **value, char **input)
 	if (result) {
 		*value = calloc(len + 1, sizeof(**value));
 		strncpy(*value, origin + 1, len);
-		// Insert a null terminator to mark the end.
+		// 끝을 표시하는 널 문자 삽입
 		*((*value) + len) = '\0';
-		// Set *input to the next character after the last double quotation mark.
+		// 입력을 닫는 큰 따옴표 뒤의 문자로 설정
 		(*input)++;
 	} else {
 		if(!isDoubleQuote)
@@ -81,16 +81,16 @@ bool parseString(char **value, char **input)
 	return result;
 }
 
-// Parse a list.
-// A list must be enclosed in square brackers ('[]')
-// A list contain 0 or more parsable data. (integer, string, list)
-// true: "[]", "[1, 2]", "[1, \"Wall\", 3]", [[], "\"Snow\"", [1, 2, [4, 5]]]"
-// false: "412[]", "[3, 5, ,,]", "[", "]]" , "]"
+// 리스트 파싱
+// 리스트는 반드시 꺾쇠 괄호 안에 존재
+// 리스트는 0개 이상의 파싱 가능한 데이터 (정수, 문자열, 리스트) 포함
+// 참: "[]", "[1, 2]", "[1, \"Wall\", 3]", [[], "\"Snow\"", [1, 2, [4, 5]]]"
+// 거짓: "412[]", "[3, 5, ,,]", "[", "]]" , "]"
 bool parseList(Node **head, char **input)
 {
 	*head = NULL;
 	bool result = true;	
-	// Result of recusive parsing
+	// 재귀 파싱의 결과
 	bool subResult = true;
 	bool isSquareBracket = (**input == '[') ? true : false;
 	bool noSyntaxError = true;
@@ -100,14 +100,14 @@ bool parseList(Node **head, char **input)
 			
 	(*input)++;
 
-	// Use a Data type to store a value.
+	// Data 구조체로 값 저장
 	Data data;
 	while (isSquareBracket && (**input) && (**input != ']') && (**input != '\0')) {
 
 		while (isspace(**input))
 			(*input)++;
 		
-		// If both a current value and a previous value are ',', syntax error
+		// 만약 현재 값과 이전 값이 둘 다 ','일 경우 구문 오류
 		if ((**input) == ',') {
 			if (isPrevComma) {	
 				noSyntaxError = false;
@@ -118,7 +118,7 @@ bool parseList(Node **head, char **input)
 			(*input)++;
 		}
 		
-		// If a data type is integer.
+		// 데이터 타입이 정수
 		if (isdigit(**input) || (**input == '-')) {
 			data.type = DATA_INTEGER;
 			parseInteger(&(data.integer), input);
@@ -126,7 +126,7 @@ bool parseList(Node **head, char **input)
 			numData++;
 			isPrevComma = false;
 			
-		// If a data typee is string.
+		// 데이터 타입이 문자열
 		} else if (**input == '\"') {
 			data.type = DATA_STRING;
 			parseString(&(data.string), input);	
@@ -135,7 +135,7 @@ bool parseList(Node **head, char **input)
 			numData++;
 			isPrevComma = false;
 		
-		// If a data type is a list.
+		// 데이터 타입이 문자열
 		} else if (**input == '[') {
 			data.type = DATA_LIST;
 			subResult = parseList(&(data.list), input);	
@@ -152,8 +152,8 @@ bool parseList(Node **head, char **input)
 	if (result)
 		(*input)++;
 	result = result && isSquareBracket && subResult && noSyntaxError;
-	// If the number of data is less than 2, the number of comma must be 0.
-	// Otherwise, it must be one less than the number of data.
+	// 데이터의 개수가 두 개보다 적으면, 쉼표의 개수는 반드시 0
+	// 그렇지 않을 경우 쉼표의 개수는 반드시 데이터의 개수보다 하나 적음
 	if (numData == 0 || numData == 1) {
 		result = result && (numComma == 0);
 	} else {
@@ -166,24 +166,24 @@ bool parseList(Node **head, char **input)
 	return result;
 }
 
-// Parse data based on type. (integer, string, list)
+// 타입을 기준으로 데이터 파싱 (정수, 문자열, 리스트)
 bool parseData(Data *data, char **input)
 {
 	bool result;
 
-	// Skip whitespaces.
+	// 여백 스킵
 	while(isspace(**input))
 		(*input)++;
 	
-	// Integer
+	// 정수
 	if (isdigit(**input) || (**input) == '-') {
 		data -> type = DATA_INTEGER;
 		result = parseInteger(&(data -> integer), input);
-	// String
+	// 문자열
 	} else if (**input == '\"') {
 		data -> type = DATA_STRING;
 		result = parseString(&(data -> string), input);
-	// List
+	// 리스트
 	} else if (**input == '[') {
 		data -> type = DATA_LIST;
 		result = parseList(&(data -> list), input);
@@ -194,7 +194,7 @@ bool parseData(Data *data, char **input)
 	return result;
 }
 
-// Print parsed data.
+// 파싱된 데이터 출력
 void printData(Data data)
 {
 	if (data.type == DATA_INTEGER) {
@@ -212,7 +212,7 @@ void printData(Data data)
 	}
 }
 
-// Deallocate the memory of the data if its type is either a string or a list.
+// 데이터의 타입이 문자열 혹은 리스트이면 데이터의 메모리를 해제
 void freeData(Data data)
 {
 	if (data.type == DATA_STRING) {
@@ -222,19 +222,19 @@ void freeData(Data data)
 			Node *next = data.list -> next;
 			if(data.list -> data -> type == DATA_STRING)
 				free(data.list -> data -> string);
-			// Recursively deallocate memory of lists.
+			// 재귀적으로 리스트의 메모리를 해제
 			if(data.list -> data -> type == DATA_LIST)
 				freeData(*(data.list -> data));
-			// Deallocate Data field first.
+			// Data 구조체의 필드를 먼저 해제
 			free(data.list -> data);
-			// Deallocate the list.
+			// 리스트 해제
 			free(data.list);
 			data.list = next;
 		}
 	}
 }
 
-// Helper function for deallocating a incorrectly formatted list.
+// 잘못된 형식의 리스트를 해제하는 도움 함수
 static void _deallocList(Node *head)
 {
 	while (head) {
@@ -249,7 +249,7 @@ static void _deallocList(Node *head)
 	}
 }
 
-// Helper function for allocating a node.
+// 노드를 할당하는 도움 함수
 static Node *_insertNode(Node *head, Data *data)
 {
 	Node *node = calloc(1, sizeof(*node));
@@ -257,23 +257,23 @@ static Node *_insertNode(Node *head, Data *data)
 	node -> data -> type = data -> type;
 	node -> next = NULL;	
 
-	// If the type of data is integer.	
+	// 데이터 타입이 정수	
 	if (data -> type == DATA_INTEGER) {
 		node -> data -> integer = data -> integer;
-	// If the type of data is string.
+	// 데이터 타입이 문자열
 	} else if (data -> type == DATA_STRING) {
 		node -> data -> string = calloc(1, strlen(data -> string) + 1);
 		strncpy(node -> data -> string, data -> string, strlen(data -> string));
 		node -> data -> string[strlen(data -> string)] = '\0';
-	// If the type of data is list.
+	// 데이터 타입이 리스트
 	} else {
-		// Initialize a list.
+		// 리스트 초기화
 		node -> data -> list = NULL;
 		for(Node *curr = data -> list; curr != NULL; curr = curr -> next)
 			node -> data -> list = _insertNode(node -> data -> list, curr -> data);	
 	}	
 
-	// If it is an empty list.
+	// 빈 리스트일 경우
 	if (head == NULL) {
 		head = node;
 	} else {

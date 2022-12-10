@@ -26,7 +26,7 @@
 ## 개발 환경
 * Linux (Ubuntu 20.04.3 LTS)
 * C (gcc 9.3.0)
-* GDB 9.2
+* gdb 9.2
 * Valgrind 3.15.0
 
 ## 제작 기간
